@@ -1,5 +1,5 @@
 __author__ = 'Jesse Kretschmer'
-__version__ = '0.3'
+__version__ = '0.4'
 import os
 import errno
 import sys
@@ -20,7 +20,7 @@ class Rotator(object):
     """
     def __init__(self, directory, age=ROTATION_DAYS, expiration=EXPIRATION_DAYS,
                  outputdir=OUTPUT_DIR, verbose=False, dateformat=DATE_FORMAT,
-                 keepempty=False):
+                 keepempty=False, **kw):
         """
         :param directory: Directory to act on.
         :param age: Age of files to rotate.
@@ -98,6 +98,40 @@ class Rotator(object):
             self.log.info("Removing empty dir: %s" % d)
             os.rmdir(d)
 
+    def undo(self):
+        """ Attempt to undo what happened during the process() method.
+        """
+        destination = self.dir
+        basedir = os.path.join(self.dir, self.out)
+        dirs_to_remove = []
+        date_folder_len = len(self.now.strftime("%Y%m"))
+        for path, dirs, files in os.walk(basedir):
+            dirs_to_remove.insert(0, path)
+            for f in files:
+                src_file = os.path.join(path, f)
+
+                dst_file = src_file.replace(basedir, '').rstrip(os.path.sep)
+                dst_file = dst_file[date_folder_len+1:].lstrip(os.path.sep)
+                dst_file = os.path.join(destination, dst_file)
+
+                dst_dir = os.path.dirname(dst_file)
+
+                if not os.path.isdir(dst_dir):
+                    os.makedirs(dst_dir)
+
+
+                self.log.info("Restoring %s => %s" % (src_file, dst_dir))
+                try:
+                    shutil.move(src_file, dst_dir)
+                except Exception, e:
+                    self.log.warning("Can't restore %s" % (src_file))
+
+        for d in dirs_to_remove:
+            try:
+                os.rmdir(d)
+            except Exception, e:
+                self.log.warning("Can't removed %s: %s" % (d, e))
+
     def setVerbose(self, verbose):
         level = logging.WARNING
         if verbose: level = logging.INFO
@@ -134,10 +168,18 @@ def main():
                              'Default: (%s)' % EXPIRATION_DAYS, 
                         type=int,
                         default=EXPIRATION_DAYS)
+    parser.add_argument('--undo', 
+                        help='Attempt to undo the process based on the given '\
+                             'parameters.',
+                        action='store_true')
 
     args = vars(parser.parse_args(sys.argv[1:]))
     rot = Rotator(**args)
-    rot.process()
+    if not args['undo']:
+        rot.process()
+    else:
+        rot.undo()
+        
 
 if __name__ == '__main__':
     main()
