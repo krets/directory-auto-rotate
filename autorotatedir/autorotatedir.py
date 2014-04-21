@@ -1,5 +1,5 @@
 __author__ = 'Jesse Kretschmer'
-__version__ = '0.4'
+__version__ = '0.5'
 import os
 import errno
 import sys
@@ -52,6 +52,8 @@ class Rotator(object):
         destination = os.path.join(self.dir, self.out)
         dirs_to_remove = []
         for path, dirs, files in os.walk(self.dir):
+            if not os.path.exists(path):
+                continue
             rotate_mode = False
             expire_mode = False
             # Try to skip over the output directories
@@ -95,8 +97,7 @@ class Rotator(object):
                 dirs_to_remove.insert(0, path)
 
         for d in dirs_to_remove:
-            self.log.info("Removing empty dir: %s" % d)
-            os.rmdir(d)
+            self.removedirs(d)
 
     def undo(self):
         """ Attempt to undo what happened during the process() method.
@@ -106,6 +107,8 @@ class Rotator(object):
         dirs_to_remove = []
         date_folder_len = len(self.now.strftime("%Y%m"))
         for path, dirs, files in os.walk(basedir):
+            if not os.path.exists(path):
+                continue
             dirs_to_remove.insert(0, path)
             for f in files:
                 src_file = os.path.join(path, f)
@@ -119,7 +122,6 @@ class Rotator(object):
                 if not os.path.isdir(dst_dir):
                     os.makedirs(dst_dir)
 
-
                 self.log.info("Restoring %s => %s" % (src_file, dst_dir))
                 try:
                     shutil.move(src_file, dst_dir)
@@ -127,10 +129,16 @@ class Rotator(object):
                     self.log.warning("Can't restore %s" % (src_file))
 
         for d in dirs_to_remove:
-            try:
-                os.rmdir(d)
-            except Exception, e:
-                self.log.warning("Can't removed %s: %s" % (d, e))
+            self.removedirs(d)
+
+    def removedirs(self, path):
+        if not os.path.exists(path):
+            return
+        self.log.info("Removing empty dir: %s" % path)
+        try:
+            os.removedirs(path)
+        except Exception, e:
+            self.log.warning("Can't remove %s: %s" % (path, e))
 
     def setVerbose(self, verbose):
         level = logging.WARNING
