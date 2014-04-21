@@ -1,5 +1,5 @@
 __author__ = 'Jesse Kretschmer'
-__version__ = '0.2'
+__version__ = '0.3'
 import os
 import errno
 import sys
@@ -50,7 +50,7 @@ class Rotator(object):
     def process(self):
         # self.dir must be an absolute path
         destination = os.path.join(self.dir, self.out)
-        empty_dirs = []
+        dirs_to_remove = []
         for path, dirs, files in os.walk(self.dir):
             rotate_mode = False
             expire_mode = False
@@ -83,6 +83,7 @@ class Rotator(object):
                     self.log.info("Rotating file: %s to %s"%(src_file,dst_dir))
                     shutil.move(src_file, dst_dir)
                 elif expire_mode and modified < self.now - self.exp_diff:
+                    self.log.info("Deleting: %s" % src_file)
                     try:
                         os.remove(src_file)
                     except Exception, e:
@@ -90,12 +91,12 @@ class Rotator(object):
                         self.log.error(msg)
                         continue
 
-            if not os.listdir(path):
-                empty_dirs.insert(0, path)
+            if not os.listdir(path) and (not self.keepempty or expire_mode):
+                dirs_to_remove.insert(0, path)
 
-        if not self.keepempty:
-            for d in empty_dirs:
-                os.rmdir(d)
+        for d in dirs_to_remove:
+            self.log.info("Removing empty dir: %s" % d)
+            os.rmdir(d)
 
     def setVerbose(self, verbose):
         level = logging.WARNING
@@ -119,17 +120,17 @@ def main():
                              'otherwise be removed.')
     parser.add_argument('-a', 
                         '--age', 
-                        help='Age of files to rotate. Any file or folders '\
-                             'older than this age will be move to the ouput '\
-                             'directory. '\
+                        help='Age (in days) of files to rotate. Any file or '\
+                             'folders older than this age will be move to the '\
+                             'ouput directory. '\
                              'Default: (%s)' % ROTATION_DAYS, 
                         type=int,
                         default=ROTATION_DAYS)
     parser.add_argument('-e', 
                         '--expiration', 
-                        help='Age of files to EXPIRE. If set to a value other '\
-                             'than 0 files of this age will be deleted from '\
-                             'the ouput directory. '\
+                        help='Age (in days) of files to EXPIRE. If set to a '\
+                             'value other than 0 files of this age will be '\
+                             'deleted from the ouput directory. '\
                              'Default: (%s)' % EXPIRATION_DAYS, 
                         type=int,
                         default=EXPIRATION_DAYS)
