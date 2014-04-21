@@ -1,5 +1,5 @@
 __author__ = 'Jesse Kretschmer'
-__version__ = '0.1'
+__version__ = '0.2'
 import os
 import errno
 import sys
@@ -37,6 +37,7 @@ class Rotator(object):
         self.date_format = dateformat
         self.log = logging.getLogger('autorotatedir')
         self.now = datetime.now()
+        if expiration == 0: self.exp_diff = None
 
         # Prepare the logger
         log_handler = logging.StreamHandler()
@@ -51,17 +52,23 @@ class Rotator(object):
         destination = os.path.join(self.dir, self.out)
         empty_dirs = []
         for path, dirs, files in os.walk(self.dir):
+            rotate_mode = False
+            expire_mode = False
             # Try to skip over the output directories
             compare_dirs = [path + os.path.sep, 
                             destination + os.path.sep]
-            if os.path.commonprefix(compare_dirs) == destination:
-                self.log.info("Ignoring output dir: %s" % path)
-                continue
+            if os.path.commonprefix(compare_dirs) == destination+os.path.sep:
+                if not self.exp_diff:
+                    self.log.info("Ignoring output dir: %s" % path)
+                    continue
+                expire_mode = True
+            else:
+                rotate_mode = True
             self.log.info("Processing: %s" % path)
             for f in files:
                 src_file = os.path.join(path, f)
                 modified = datetime.fromtimestamp(os.path.getmtime(src_file))
-                if modified + self.old_diff < self.now:
+                if rotate_mode and modified < self.now-self.old_diff:
                     date_dir = modified.strftime(self.date_format)
                     sub_dir = path.replace(self.dir, '').lstrip(os.path.sep)
                     dst_dir = os.path.join(destination, date_dir, sub_dir)
@@ -75,6 +82,13 @@ class Rotator(object):
                             continue
                     self.log.info("Rotating file: %s to %s"%(src_file,dst_dir))
                     shutil.move(src_file, dst_dir)
+                elif expire_mode and modified < self.now - self.exp_diff:
+                    try:
+                        os.remove(src_file)
+                    except Exception, e:
+                        msg = "Can't remove file, %s: %s" % (src_file,e)
+                        self.log.error(msg)
+                        continue
 
             if not os.listdir(path):
                 empty_dirs.insert(0, path)
