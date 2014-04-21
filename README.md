@@ -27,7 +27,7 @@ optional arguments:
                         directory. Default: (30)
   -e EXPIRATION, --expiration EXPIRATION
                         Age (in days) of files to EXPIRE. If set to a value
-                        other than 0 files of this age will be deleted from
+                        other than 0, files of this age will be deleted from
                         the ouput directory. Default: (0)
   --undo                Attempt to undo the process based on the given
                         parameters.

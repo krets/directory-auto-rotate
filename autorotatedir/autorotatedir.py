@@ -171,7 +171,7 @@ def main():
     parser.add_argument('-e', 
                         '--expiration', 
                         help='Age (in days) of files to EXPIRE. If set to a '\
-                             'value other than 0 files of this age will be '\
+                             'value other than 0, files of this age will be '\
                              'deleted from the ouput directory. '\
                              'Default: (%s)' % EXPIRATION_DAYS, 
                         type=int,
