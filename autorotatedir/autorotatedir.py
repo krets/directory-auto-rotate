@@ -153,7 +153,7 @@ def main():
                         help='Directory to work on.')
     parser.add_argument('-o','--outputdir', 
                         help='Destination folder for rotated files. This is '\
-                             'treated as relative to the inpected directory. '\
+                             'treated as relative to the inspected directory. '\
                              'Default: (%s)' % OUTPUT_DIR, 
                         default=OUTPUT_DIR)
     parser.add_argument('-v', '--verbose', action='store_true')
