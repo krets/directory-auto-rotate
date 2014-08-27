@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 __author__ = 'Jesse Kretschmer'
 __version__ = '0.5'
 import os
@@ -15,7 +16,7 @@ EXPIRATION_DAYS = 0
 DATE_FORMAT = "%Y%m"
 
 class Rotator(object):
-    """ Rotator for handling the walking, moving and deleting of files in a 
+    """ Rotator for handling the walking, moving and deleting of files in a
         given directory.
     """
     def __init__(self, directory, age=ROTATION_DAYS, expiration=EXPIRATION_DAYS,
@@ -57,7 +58,7 @@ class Rotator(object):
             rotate_mode = False
             expire_mode = False
             # Try to skip over the output directories
-            compare_dirs = [path + os.path.sep, 
+            compare_dirs = [path + os.path.sep,
                             destination + os.path.sep]
             if os.path.commonprefix(compare_dirs) == destination+os.path.sep:
                 if not self.exp_diff:
@@ -151,32 +152,32 @@ def main():
     parser = argparse.ArgumentParser(description=desc)
     parser.add_argument('directory',
                         help='Directory to work on.')
-    parser.add_argument('-o','--outputdir', 
+    parser.add_argument('-o','--outputdir',
                         help='Destination folder for rotated files. This is '\
                              'treated as relative to the inspected directory. '\
-                             'Default: (%s)' % OUTPUT_DIR, 
+                             'Default: (%s)' % OUTPUT_DIR,
                         default=OUTPUT_DIR)
     parser.add_argument('-v', '--verbose', action='store_true')
     parser.add_argument('-k', '--keepempty', action='store_true',
                         help='Keep empty directories. Empty directories will '\
                              'otherwise be removed.')
-    parser.add_argument('-a', 
-                        '--age', 
+    parser.add_argument('-a',
+                        '--age',
                         help='Age (in days) of files to rotate. Any file or '\
                              'folders older than this age will be move to the '\
                              'ouput directory. '\
-                             'Default: (%s)' % ROTATION_DAYS, 
+                             'Default: (%s)' % ROTATION_DAYS,
                         type=int,
                         default=ROTATION_DAYS)
-    parser.add_argument('-e', 
-                        '--expiration', 
+    parser.add_argument('-e',
+                        '--expiration',
                         help='Age (in days) of files to EXPIRE. If set to a '\
                              'value other than 0, files of this age will be '\
                              'deleted from the ouput directory. '\
-                             'Default: (%s)' % EXPIRATION_DAYS, 
+                             'Default: (%s)' % EXPIRATION_DAYS,
                         type=int,
                         default=EXPIRATION_DAYS)
-    parser.add_argument('--undo', 
+    parser.add_argument('--undo',
                         help='Attempt to undo the process based on the given '\
                              'parameters.',
                         action='store_true')
@@ -187,7 +188,7 @@ def main():
         rot.process()
     else:
         rot.undo()
-        
+
 
 if __name__ == '__main__':
     main()
